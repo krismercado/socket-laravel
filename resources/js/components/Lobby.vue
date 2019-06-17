@@ -36,7 +36,6 @@
     </div>
 
     <div>
-      <!--<game-view :form="form" :key="componentKey" v-on:event_child="eventChild"></game-view>-->
       <center>
         <div class="container">
           <section id="game">
@@ -62,7 +61,6 @@
 
 <script>
     import io from "socket.io-client";
-    //import Game from './Game.vue'
     export default {
         data() {
             return {
@@ -97,26 +95,13 @@
             changeUnit() {
               this.form.units = this.form.unitinput;
               this.isHidden = true;
-              //this.socket.emit("hidden", 3);
+              this.socket.emit("hidden", 3);
             },
             divclick(unit,index){
               console.log('div clicked: '+unit+' , '+index);
               this.$emit('div clicked', 'someValue');
             },
-            /**
-            eventChild: function(id) {
-        			console.log('Connections:', id)
-              if (id == 3){
-                this.isDisabled = false;
-              }
-        		}
-            **/
-        },
-        /**
-        components: {
-          'game-view': Game
         }
-        **/
     }
 </script>
 
