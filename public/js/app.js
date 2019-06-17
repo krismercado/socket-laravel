@@ -2249,8 +2249,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
- //import Game from './Game.vue'
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
@@ -2264,7 +2262,8 @@ __webpack_require__.r(__webpack_exports__);
       },
       componentKey: 0,
       isHidden: false,
-      isDisabled: true
+      isDisabled: true,
+      myKey: ''
     };
   },
   created: function created() {
@@ -2277,9 +2276,20 @@ __webpack_require__.r(__webpack_exports__);
     this.socket.on("clients", function (data) {
       console.log('Connections:', data);
 
-      if (data == 3) {
+      if (data >= 3) {
         _this.isDisabled = false;
       }
+    });
+    this.socket.on("isHidden", function (data) {
+      console.log('hidden:', data);
+      _this.form.units = Number(data);
+      _this.isHidden = true;
+    });
+    this.socket.on("incomplete", function (data) {
+      alert(data);
+      _this.isHidden = false;
+      _this.isDisabled = true;
+      _this.form.units = 0;
     });
   },
   methods: {
@@ -2288,19 +2298,14 @@ __webpack_require__.r(__webpack_exports__);
     },
     changeUnit: function changeUnit() {
       this.form.units = this.form.unitinput;
-      this.isHidden = true; //this.socket.emit("hidden", 3);
+      this.isHidden = true;
+      this.socket.emit("hidden", this.form.units);
     },
     divclick: function divclick(unit, index) {
       console.log('div clicked: ' + unit + ' , ' + index);
       this.$emit('div clicked', 'someValue');
     }
   }
-  /**
-  components: {
-    'game-view': Game
-  }
-  **/
-
 });
 
 /***/ }),

@@ -73,7 +73,8 @@
                 },
                 componentKey: 0,
                 isHidden: false,
-                isDisabled: true
+                isDisabled: true,
+                myKey: ''
             }
         },
         created() {
@@ -81,11 +82,25 @@
         },
         mounted() {
           console.log('Component mounted.');
+
           this.socket.on("clients", data => {
             console.log('Connections:', data)
-            if (data == 3){
+            if (data >= 3){
               this.isDisabled = false;
             }
+          });
+
+          this.socket.on("isHidden", data => {
+            console.log('hidden:', data)
+            this.form.units = Number(data);
+            this.isHidden = true;
+          });
+
+          this.socket.on("incomplete", data => {
+            alert(data);
+            this.isHidden = false;
+            this.isDisabled = true;
+            this.form.units = 0;
           });
         },
         methods: {
@@ -95,7 +110,7 @@
             changeUnit() {
               this.form.units = this.form.unitinput;
               this.isHidden = true;
-              this.socket.emit("hidden", 3);
+              this.socket.emit("hidden", this.form.units);
             },
             divclick(unit,index){
               console.log('div clicked: '+unit+' , '+index);

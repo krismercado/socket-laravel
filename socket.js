@@ -21,7 +21,7 @@ Socketio.on("connection", socket => {
 
     socket.emit("position", position);
     socket.on("hidden", data => {
-      console.log('hidden: '+data);
+      Socketio.emit("isHidden", data);
     });
     socket.on("move", data => {
         switch(data) {
@@ -47,4 +47,10 @@ Socketio.on("connection", socket => {
                 break;
         }
     });
+
+    socket.on('disconnect', function(){
+      // then broadcast it to all various connections
+      Socketio.emit('incomplete', 'User has disconnected.');
+
+  });
 });
