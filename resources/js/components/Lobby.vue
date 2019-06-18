@@ -30,6 +30,7 @@
             </div>
           </form>
           <button class="btn btn-success btn-lg btn-block" v-on:click="changeUnit()" :disabled='isDisabled'>Start Game</button>
+
         </div>
 
       </div>
@@ -74,14 +75,29 @@
                 componentKey: 0,
                 isHidden: false,
                 isDisabled: true,
-                myKey: ''
+                myKey: '',
+                color: {
+                  red: false,
+                  green: false,
+                  blue: false
+                }
             }
         },
         created() {
           this.socket = io("http://localhost:3000");
         },
+        beforeMount(){
+          this.read();
+        },
         mounted() {
           console.log('Component mounted.');
+
+          this.socket.on("clients", data => {
+            console.log('Connections:', data)
+            if (data >= 3){
+              this.isDisabled = false;
+            }
+          });
 
           this.socket.on("clients", data => {
             console.log('Connections:', data)
@@ -101,6 +117,9 @@
             this.isHidden = false;
             this.isDisabled = true;
             this.form.units = 0;
+            this.update(1, false);
+            this.update(2, false);
+            this.update(3, false);
           });
         },
         methods: {
@@ -115,6 +134,55 @@
             divclick(unit,index){
               console.log('div clicked: '+unit+' , '+index);
               this.$emit('div clicked', 'someValue');
+            },
+            checkkey(){
+              console.log('myKey: ' + sessionStorage.getItem('myKey'));
+              //console.log('myKey: ' + this.myKey);
+            },
+            read() {
+              window.axios.get('/api/colors').then(({ data }) => {
+                for (let d in data) {
+                  console.log(data[d].color + ' : ' + data[d].taken);
+                  if(data[d].color == 'red' && data[d].taken == true){this.color.red = true;}
+                  if(data[d].color == 'blue' && data[d].taken == true){this.color.blue = true;}
+                  if(data[d].color == 'green' && data[d].taken == true){this.color.green = true;}
+                }
+
+                //lets set a color for each connected client
+                if(!this.color.red){
+                  console.log('I am red');
+                  sessionStorage.setItem('myKey', 'red');
+                  this.color.red = true;
+                  this.socket.emit("color", 'red');
+                  this.update(1, true);
+                }
+                else if(!this.color.blue){
+                  console.log('I am blue');
+                  sessionStorage.setItem('myKey', 'blue');
+                  this.color.blue = true;
+                  this.socket.emit("color", 'blue');
+                  this.update(2, true);
+                }
+                else if(!this.color.green){
+                  console.log('I am green');
+                  sessionStorage.setItem('myKey', 'green');
+                  this.color.green = true;
+                  this.socket.emit("color", 'green');
+                  this.update(3, true);
+                }
+                else{
+                  alert('Please Restart Node Socket!')
+                }
+
+              });
+            },
+            update(id, taken) {
+              window.axios.patch(`/api/colors/${id}`, { taken }).then(() => {
+                // Once AJAX resolves we can update the Crud with the new color
+                //this.cruds.find(crud => crud.id === id).color = color;
+              }).catch(error => {
+                console.log(error.message);
+              })
             },
         }
     }

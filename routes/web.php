@@ -15,10 +15,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/game', function () {
-    return view('game');
-});
-
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');

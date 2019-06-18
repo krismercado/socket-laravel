@@ -2249,6 +2249,8 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
@@ -2263,16 +2265,31 @@ __webpack_require__.r(__webpack_exports__);
       componentKey: 0,
       isHidden: false,
       isDisabled: true,
-      myKey: ''
+      myKey: '',
+      color: {
+        red: false,
+        green: false,
+        blue: false
+      }
     };
   },
   created: function created() {
     this.socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default()("http://localhost:3000");
   },
+  beforeMount: function beforeMount() {
+    this.read();
+  },
   mounted: function mounted() {
     var _this = this;
 
     console.log('Component mounted.');
+    this.socket.on("clients", function (data) {
+      console.log('Connections:', data);
+
+      if (data >= 3) {
+        _this.isDisabled = false;
+      }
+    });
     this.socket.on("clients", function (data) {
       console.log('Connections:', data);
 
@@ -2290,6 +2307,14 @@ __webpack_require__.r(__webpack_exports__);
       _this.isHidden = false;
       _this.isDisabled = true;
       _this.form.units = 0;
+
+      _this.update(1, false);
+
+      _this.update(2, false);
+
+      _this.update(3, false);
+
+      window.close();
     });
   },
   methods: {
@@ -2304,6 +2329,70 @@ __webpack_require__.r(__webpack_exports__);
     divclick: function divclick(unit, index) {
       console.log('div clicked: ' + unit + ' , ' + index);
       this.$emit('div clicked', 'someValue');
+    },
+    checkkey: function checkkey() {
+      console.log('myKey: ' + sessionStorage.getItem('myKey')); //console.log('myKey: ' + this.myKey);
+    },
+    read: function read() {
+      var _this2 = this;
+
+      window.axios.get('/api/colors').then(function (_ref) {
+        var data = _ref.data;
+
+        for (var d in data) {
+          console.log(data[d].color + ' : ' + data[d].taken);
+
+          if (data[d].color == 'red' && data[d].taken == true) {
+            _this2.color.red = true;
+          }
+
+          if (data[d].color == 'blue' && data[d].taken == true) {
+            _this2.color.blue = true;
+          }
+
+          if (data[d].color == 'green' && data[d].taken == true) {
+            _this2.color.green = true;
+          }
+        } //lets set a color for each connected client
+
+
+        if (!_this2.color.red) {
+          console.log('I am red');
+          sessionStorage.setItem('myKey', 'red');
+          _this2.color.red = true;
+
+          _this2.socket.emit("color", 'red');
+
+          _this2.update(1, true);
+        } else if (!_this2.color.blue) {
+          console.log('I am blue');
+          sessionStorage.setItem('myKey', 'blue');
+          _this2.color.blue = true;
+
+          _this2.socket.emit("color", 'blue');
+
+          _this2.update(2, true);
+        } else if (!_this2.color.green) {
+          console.log('I am green');
+          sessionStorage.setItem('myKey', 'green');
+          _this2.color.green = true;
+
+          _this2.socket.emit("color", 'green');
+
+          _this2.update(3, true);
+        } else {
+          alert('Please Restart Node Socket!');
+        }
+      });
+    },
+    update: function update(id, taken) {
+      window.axios.patch("/api/colors/".concat(id), {
+        taken: taken
+      }).then(function () {// Once AJAX resolves we can update the Crud with the new color
+        //this.cruds.find(crud => crud.id === id).color = color;
+      })["catch"](function (error) {
+        console.log(error.message);
+      });
     }
   }
 });
@@ -47146,6 +47235,19 @@ var render = function() {
                   _c("br")
                 ])
               ]),
+              _vm._v(" "),
+              _c(
+                "button",
+                {
+                  staticClass: "btn btn-success btn-lg btn-block",
+                  on: {
+                    click: function($event) {
+                      return _vm.checkkey()
+                    }
+                  }
+                },
+                [_vm._v("Check my key")]
+              ),
               _vm._v(" "),
               _c(
                 "button",

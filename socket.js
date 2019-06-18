@@ -20,37 +20,14 @@ Socketio.on("connection", socket => {
     Socketio.emit("clients", connections.length);
 
     socket.emit("position", position);
+
     socket.on("hidden", data => {
       Socketio.emit("isHidden", data);
-    });
-    socket.on("move", data => {
-        switch(data) {
-            case "left":
-                console.log('left');
-                position.x -= 5;
-                Socketio.emit("position", position);
-                break;
-            case "right":
-                console.log('right');
-                position.x += 5;
-                Socketio.emit("position", position);
-                break;
-            case "up":
-                console.log('up');
-                position.y -= 5;
-                Socketio.emit("position", position);
-                break;
-            case "down":
-                console.log('down');
-                position.y += 5;
-                Socketio.emit("position", position);
-                break;
-        }
     });
 
     socket.on('disconnect', function(){
       // then broadcast it to all various connections
-      Socketio.emit('incomplete', 'User has disconnected.');
+      Socketio.emit('incomplete', 'A user has disconnected. Please exit the browser and restart node.');
 
   });
 });
