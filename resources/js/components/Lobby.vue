@@ -29,7 +29,7 @@
               <br />
             </div>
           </form>
-          <button class="btn btn-success btn-lg btn-block" v-on:click="changeUnit()" :disabled='isDisabled'>Start Game</button>
+          <button class="btn btn-success btn-lg btn-block" v-on:click="startGame()" :disabled='isDisabled'>Start Game</button>
 
         </div>
 
@@ -54,6 +54,12 @@
               </div>
             </div>
           </section>
+          <br />
+          <div v-if="isHidden">
+              <p v-if="myKey == 'blue'"><a class="btn btn-primary btn-lg" href="#" role="button" disabled>YOU ARE BLUE</a></p>
+              <p v-if="myKey == 'red'"><a class="btn btn-danger btn-lg" href="#" role="button" disabled>YOU ARE RED</a></p>
+              <p v-if="myKey == 'green'"><a class="btn btn-success btn-lg" href="#" role="button" disabled>YOU ARE GREEN</a></p>
+          </div>
         </div>
       </center>
     </div>
@@ -110,6 +116,7 @@
             console.log('hidden:', data)
             this.form.units = Number(data);
             this.isHidden = true;
+            this.myKey = sessionStorage.getItem('myKey');
           });
 
           this.socket.on("incomplete", data => {
@@ -126,7 +133,7 @@
             forceRerender() {
               this.componentKey += 1;
             },
-            changeUnit() {
+            startGame() {
               this.form.units = this.form.unitinput;
               this.isHidden = true;
               this.socket.emit("hidden", this.form.units);
