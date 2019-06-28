@@ -2195,6 +2195,44 @@ __webpack_require__.r(__webpack_exports__);
     });
     this.socket.on("positions", function (data) {
       _this.positions = data;
+
+      if (_this.positions.length == 3) {
+        _this.positions.forEach(function (position) {
+          console.log(position.key);
+          console.log(position.move);
+
+          if (position.key == 'blue') {
+            console.log('current position: ' + this.current.blue);
+
+            if (position.move != 0) {
+              document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
+              document.getElementById(position.move).innerHTML = "<div class='blueDot'></div>";
+            } //this.current.blue = unit+"."+index;
+
+          }
+
+          if (position.key == 'red') {
+            console.log('current position: ' + this.current.red);
+
+            if (position.move != 0) {
+              document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
+              document.getElementById(position.move).innerHTML = "<div class='redDot'></div>";
+            } //this.current.red = unit+"."+index;
+
+          }
+
+          if (position.key == 'green') {
+            console.log('current position: ' + this.current.green);
+
+            if (position.move != 0) {
+              document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
+              document.getElementById(position.move).innerHTML = "<div class='greenDot'></div>";
+            } //this.current.green = unit+"."+index;
+
+          }
+        }); // @todo emit to resolve all moves and empty positions object
+
+      }
     });
     this.socket.on("incomplete", function (data) {
       // alert when a player quits
@@ -2227,30 +2265,16 @@ __webpack_require__.r(__webpack_exports__);
         this.validatemove(unit + "." + index);
 
         if (this.isvalid != false) {
-          if (this.myKey == 'blue') {
-            console.log('current position: ' + this.current.blue);
-            document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
-            document.getElementById(unit + "." + index).innerHTML = "<div class='blueDot'></div>"; //this.current.blue = unit+"."+index;
-          }
-
-          if (this.myKey == 'red') {
-            console.log('current position: ' + this.current.red);
-            document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
-            document.getElementById(unit + "." + index).innerHTML = "<div class='redDot'></div>"; //this.current.red = unit+"."+index;
-          }
-
-          if (this.myKey == 'green') {
-            console.log('current position: ' + this.current.green);
-            document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
-            document.getElementById(unit + "." + index).innerHTML = "<div class='greenDot'></div>"; //this.current.green = unit+"."+index;
-          }
-
           this.positions.push({
             "key": this.myKey,
             "move": unit + "." + index
           });
         } else {
-          alert('invalid move.'); //this.positions.push({"key":this.myKey, "x":0, "y":0});
+          alert("Invalid move, you've lost a turn");
+          this.positions.push({
+            "key": this.myKey,
+            "move": 0
+          });
         }
 
         console.log(JSON.stringify(this.positions)); // @todo emit position: check if everyone has completed a move for the current the turn
