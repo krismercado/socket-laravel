@@ -2128,6 +2128,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   // set initial vars
@@ -2156,7 +2165,8 @@ __webpack_require__.r(__webpack_exports__);
         red: 0,
         green: 0
       },
-      isvalid: false
+      isvalid: false,
+      activeBtn: ''
     };
   },
   //create socket connection
@@ -2210,39 +2220,43 @@ __webpack_require__.r(__webpack_exports__);
       this.socket.emit("hidden", this.form.units);
     },
     divclick: function divclick(unit, index) {
-      console.log(this.myKey + ' clicked circle: ' + unit + ' , ' + index);
-      this.validatemove(unit + "." + index);
-
-      if (this.isvalid != false) {
-        if (this.myKey == 'blue') {
-          console.log('current position: ' + this.current.blue);
-          document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
-          document.getElementById(unit + "." + index).innerHTML = "<div class='blueDot'></div>"; //this.current.blue = unit+"."+index;
-        }
-
-        if (this.myKey == 'red') {
-          console.log('current position: ' + this.current.red);
-          document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
-          document.getElementById(unit + "." + index).innerHTML = "<div class='redDot'></div>"; //this.current.red = unit+"."+index;
-        }
-
-        if (this.myKey == 'green') {
-          console.log('current position: ' + this.current.green);
-          document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
-          document.getElementById(unit + "." + index).innerHTML = "<div class='greenDot'></div>"; //this.current.green = unit+"."+index;
-        }
-
-        this.positions.push({
-          "key": this.myKey,
-          "move": unit + "." + index
-        });
+      if (this.activeBtn == '') {
+        alert('please choose a move type');
       } else {
-        console.log('invalid move.'); //this.positions.push({"key":this.myKey, "x":0, "y":0});
+        console.log(this.myKey + ' clicked circle: ' + unit + ' , ' + index);
+        this.validatemove(unit + "." + index);
+
+        if (this.isvalid != false) {
+          if (this.myKey == 'blue') {
+            console.log('current position: ' + this.current.blue);
+            document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
+            document.getElementById(unit + "." + index).innerHTML = "<div class='blueDot'></div>"; //this.current.blue = unit+"."+index;
+          }
+
+          if (this.myKey == 'red') {
+            console.log('current position: ' + this.current.red);
+            document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
+            document.getElementById(unit + "." + index).innerHTML = "<div class='redDot'></div>"; //this.current.red = unit+"."+index;
+          }
+
+          if (this.myKey == 'green') {
+            console.log('current position: ' + this.current.green);
+            document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
+            document.getElementById(unit + "." + index).innerHTML = "<div class='greenDot'></div>"; //this.current.green = unit+"."+index;
+          }
+
+          this.positions.push({
+            "key": this.myKey,
+            "move": unit + "." + index
+          });
+        } else {
+          alert('invalid move.'); //this.positions.push({"key":this.myKey, "x":0, "y":0});
+        }
+
+        console.log(JSON.stringify(this.positions)); // @todo emit position: check if everyone has completed a move for the current the turn
+
+        this.socket.emit("position", this.positions);
       }
-
-      console.log(JSON.stringify(this.positions)); // @todo emit position: check if everyone has completed a move for the current the turn
-
-      this.socket.emit("position", this.positions);
     },
     checkkey: function checkkey() {
       console.log('myKey: ' + sessionStorage.getItem('myKey'));
@@ -2254,8 +2268,6 @@ __webpack_require__.r(__webpack_exports__);
         var data = _ref.data;
 
         for (var d in data) {
-          console.log(data[d].color + ' : ' + data[d].taken);
-
           if (data[d].color == 'red' && data[d].taken == true) {
             _this2.color.red = true;
           }
@@ -2271,7 +2283,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
         if (!_this2.color.red) {
-          console.log('I am red');
           sessionStorage.setItem('myKey', 'red');
           _this2.color.red = true;
 
@@ -2279,7 +2290,6 @@ __webpack_require__.r(__webpack_exports__);
 
           _this2.update(1, true);
         } else if (!_this2.color.blue) {
-          console.log('I am blue');
           sessionStorage.setItem('myKey', 'blue');
           _this2.color.blue = true;
 
@@ -2287,7 +2297,6 @@ __webpack_require__.r(__webpack_exports__);
 
           _this2.update(2, true);
         } else if (!_this2.color.green) {
-          console.log('I am green');
           sessionStorage.setItem('myKey', 'green');
           _this2.color.green = true;
 
@@ -2295,7 +2304,7 @@ __webpack_require__.r(__webpack_exports__);
 
           _this2.update(3, true);
         } else {
-          alert('Please Restart Node Socket!');
+          alert('Please exit and restart Node Socket!');
         }
       });
     },
@@ -2319,101 +2328,43 @@ __webpack_require__.r(__webpack_exports__);
 
         if (this.myKey == 'blue') {
           tmp = parseFloat(this.current.blue);
-
-          switch (id) {
-            case (tmp - 1.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp - 1.0).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp + 1.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp + 1.0).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp + 0.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp - 0.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            default:
-              this.isvalid = false;
-          }
         }
 
         if (this.myKey == 'red') {
           tmp = parseFloat(this.current.red);
-
-          switch (id) {
-            case (tmp - 1.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp - 1.0).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp + 1.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp + 1.0).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp + 0.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            case (tmp - 0.1).toFixed(1):
-              this.isvalid = true;
-              break;
-
-            default:
-              this.isvalid = false;
-          }
         }
 
         if (this.myKey == 'green') {
           tmp = parseFloat(this.current.green);
+        }
 
-          switch (id) {
-            case (tmp - 1.1).toFixed(1):
-              this.isvalid = true;
-              break;
+        switch (id) {
+          case (tmp - 1.1).toFixed(1):
+            this.isvalid = true;
+            break;
 
-            case (tmp - 1.0).toFixed(1):
-              this.isvalid = true;
-              break;
+          case (tmp - 1.0).toFixed(1):
+            this.isvalid = true;
+            break;
 
-            case (tmp + 1.1).toFixed(1):
-              this.isvalid = true;
-              break;
+          case (tmp + 1.1).toFixed(1):
+            this.isvalid = true;
+            break;
 
-            case (tmp + 1.0).toFixed(1):
-              this.isvalid = true;
-              break;
+          case (tmp + 1.0).toFixed(1):
+            this.isvalid = true;
+            break;
 
-            case (tmp + 0.1).toFixed(1):
-              this.isvalid = true;
-              break;
+          case (tmp + 0.1).toFixed(1):
+            this.isvalid = true;
+            break;
 
-            case (tmp - 0.1).toFixed(1):
-              this.isvalid = true;
-              break;
+          case (tmp - 0.1).toFixed(1):
+            this.isvalid = true;
+            break;
 
-            default:
-              this.isvalid = false;
-          }
+          default:
+            this.isvalid = false;
         }
       } // else
 
@@ -47237,7 +47188,66 @@ var render = function() {
                           [_vm._v("YOU ARE GREEN")]
                         )
                       ])
-                    : _vm._e()
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c("br"),
+                  _c("br"),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    {
+                      staticClass: "btn-group",
+                      attrs: { role: "group", id: "toolBtns" }
+                    },
+                    [
+                      _c("p", [_c("b", [_vm._v("Choose your move")])]),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn",
+                          class: { active: _vm.activeBtn === "btn1" },
+                          attrs: { type: "button" },
+                          on: {
+                            click: function($event) {
+                              _vm.activeBtn = "btn1"
+                            }
+                          }
+                        },
+                        [_vm._v("Hammer")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn",
+                          class: { active: _vm.activeBtn === "btn2" },
+                          attrs: { type: "button" },
+                          on: {
+                            click: function($event) {
+                              _vm.activeBtn = "btn2"
+                            }
+                          }
+                        },
+                        [_vm._v("Move Cell")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn",
+                          class: { active: _vm.activeBtn === "btn3" },
+                          attrs: { type: "button" },
+                          on: {
+                            click: function($event) {
+                              _vm.activeBtn = "btn3"
+                            }
+                          }
+                        },
+                        [_vm._v("Skip Turn")]
+                      )
+                    ]
+                  )
                 ])
               : _vm._e()
           ])

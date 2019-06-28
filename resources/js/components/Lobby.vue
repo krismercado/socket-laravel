@@ -59,6 +59,15 @@
               <p v-if="myKey == 'blue'"><a class="btn btn-primary btn-lg" href="#" role="button" disabled>YOU ARE BLUE</a></p>
               <p v-if="myKey == 'red'"><a class="btn btn-danger btn-lg" href="#" role="button" disabled>YOU ARE RED</a></p>
               <p v-if="myKey == 'green'"><a class="btn btn-success btn-lg" href="#" role="button" disabled>YOU ARE GREEN</a></p>
+              <br /><br />
+              <div class="btn-group" role="group" id="toolBtns">
+                <p>
+                  <b>Choose your move</b>
+                </p>
+                <button class="btn" type="button" @click="activeBtn = 'btn1'" :class="{active: activeBtn === 'btn1' }">Hammer</button>
+                <button class="btn" type="button" @click="activeBtn = 'btn2'" :class="{active: activeBtn === 'btn2' }">Move Cell</button>
+                <button class="btn" type="button" @click="activeBtn = 'btn3'" :class="{active: activeBtn === 'btn3' }">Skip Turn</button>
+              </div>
           </div>
         </div>
       </center>
@@ -95,7 +104,8 @@
                   red: 0,
                   green: 0
                 },
-                isvalid: false
+                isvalid: false,
+                activeBtn:''
             }
         },
 
@@ -151,41 +161,47 @@
               this.socket.emit("hidden", this.form.units);
             },
             divclick(unit,index){
-              console.log(this.myKey+' clicked circle: '+ unit +' , '+ index);
+              if(this.activeBtn == '') {
+                alert('please choose a move type');
+              }
+              else {
+                console.log(this.myKey+' clicked circle: '+ unit +' , '+ index);
 
-              this.validatemove(unit+"."+index);
+                this.validatemove(unit+"."+index);
 
-              if (this.isvalid != false)
-              {
-                if(this.myKey == 'blue'){
-                  console.log('current position: '+this.current.blue);
-                  document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
-                  document.getElementById(unit+"."+index).innerHTML = "<div class='blueDot'></div>";
-                  //this.current.blue = unit+"."+index;
-                }
-                if(this.myKey == 'red'){
-                  console.log('current position: '+this.current.red);
-                  document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
-                  document.getElementById(unit+"."+index).innerHTML = "<div class='redDot'></div>";
-                  //this.current.red = unit+"."+index;
-                }
-                if(this.myKey == 'green'){
-                  console.log('current position: '+this.current.green);
-                  document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
-                  document.getElementById(unit+"."+index).innerHTML = "<div class='greenDot'></div>";
-                  //this.current.green = unit+"."+index;
+                if (this.isvalid != false)
+                {
+                  if(this.myKey == 'blue'){
+                    console.log('current position: '+this.current.blue);
+                    document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
+                    document.getElementById(unit+"."+index).innerHTML = "<div class='blueDot'></div>";
+                    //this.current.blue = unit+"."+index;
+                  }
+                  if(this.myKey == 'red'){
+                    console.log('current position: '+this.current.red);
+                    document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
+                    document.getElementById(unit+"."+index).innerHTML = "<div class='redDot'></div>";
+                    //this.current.red = unit+"."+index;
+                  }
+                  if(this.myKey == 'green'){
+                    console.log('current position: '+this.current.green);
+                    document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
+                    document.getElementById(unit+"."+index).innerHTML = "<div class='greenDot'></div>";
+                    //this.current.green = unit+"."+index;
+                  }
+
+                  this.positions.push({"key":this.myKey, "move":unit+"."+index});
+                } else {
+                  alert('invalid move.');
+                  //this.positions.push({"key":this.myKey, "x":0, "y":0});
                 }
 
-                this.positions.push({"key":this.myKey, "move":unit+"."+index});
-              } else {
-                alert('invalid move.');
-                //this.positions.push({"key":this.myKey, "x":0, "y":0});
+                console.log(JSON.stringify(this.positions));
+
+                // @todo emit position: check if everyone has completed a move for the current the turn
+                this.socket.emit("position", this.positions);
               }
 
-              console.log(JSON.stringify(this.positions));
-
-              // @todo emit position: check if everyone has completed a move for the current the turn
-              this.socket.emit("position", this.positions);
             },
             checkkey(){
               console.log('myKey: ' + sessionStorage.getItem('myKey'));
@@ -193,7 +209,6 @@
             read() {
               window.axios.get('/api/colors').then(({ data }) => {
                 for (let d in data) {
-                  console.log(data[d].color + ' : ' + data[d].taken);
                   if(data[d].color == 'red' && data[d].taken == true){this.color.red = true;}
                   if(data[d].color == 'blue' && data[d].taken == true){this.color.blue = true;}
                   if(data[d].color == 'green' && data[d].taken == true){this.color.green = true;}
@@ -201,28 +216,25 @@
 
                 //lets set a color for each connected client
                 if(!this.color.red){
-                  console.log('I am red');
                   sessionStorage.setItem('myKey', 'red');
                   this.color.red = true;
                   this.socket.emit("color", 'red');
                   this.update(1, true);
                 }
                 else if(!this.color.blue){
-                  console.log('I am blue');
                   sessionStorage.setItem('myKey', 'blue');
                   this.color.blue = true;
                   this.socket.emit("color", 'blue');
                   this.update(2, true);
                 }
                 else if(!this.color.green){
-                  console.log('I am green');
                   sessionStorage.setItem('myKey', 'green');
                   this.color.green = true;
                   this.socket.emit("color", 'green');
                   this.update(3, true);
                 }
                 else{
-                  alert('Please Restart Node Socket!')
+                  alert('Please exit and restart Node Socket!')
                 }
 
               });
@@ -249,78 +261,35 @@
 
                 if(this.myKey == 'blue'){
                   tmp = parseFloat(this.current.blue);
-                  switch(id) {
-                    case ( tmp - 1.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case (tmp - 1.0).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 1.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 1.0).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 0.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp - 0.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    default:
-                      this.isvalid = false;
-                  }
                 }
                 if(this.myKey == 'red'){
                   tmp = parseFloat(this.current.red);
-                  switch(id) {
-                    case ( tmp - 1.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case (tmp - 1.0).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 1.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 1.0).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 0.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp - 0.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    default:
-                      this.isvalid = false;
-                  }
                 }
                 if(this.myKey == 'green'){
                   tmp = parseFloat(this.current.green);
-                  switch(id) {
-                    case ( tmp - 1.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case (tmp - 1.0).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 1.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 1.0).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp + 0.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    case ( tmp - 0.1).toFixed(1):
-                      this.isvalid = true;
-                      break;
-                    default:
-                      this.isvalid = false;
-                  }
+                }
+
+                switch(id) {
+                  case ( tmp - 1.1).toFixed(1):
+                    this.isvalid = true;
+                    break;
+                  case (tmp - 1.0).toFixed(1):
+                    this.isvalid = true;
+                    break;
+                  case ( tmp + 1.1).toFixed(1):
+                    this.isvalid = true;
+                    break;
+                  case ( tmp + 1.0).toFixed(1):
+                    this.isvalid = true;
+                    break;
+                  case ( tmp + 0.1).toFixed(1):
+                    this.isvalid = true;
+                    break;
+                  case ( tmp - 0.1).toFixed(1):
+                    this.isvalid = true;
+                    break;
+                  default:
+                    this.isvalid = false;
                 }
               } // else
 
