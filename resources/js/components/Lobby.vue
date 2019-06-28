@@ -151,7 +151,7 @@
               this.socket.emit("hidden", this.form.units);
             },
             divclick(unit,index){
-              console.log(this.myKey+' clicked circle: '+unit+' , '+index);
+              console.log(this.myKey+' clicked circle: '+ unit +' , '+ index);
 
               this.validatemove(unit+"."+index);
 
@@ -161,24 +161,24 @@
                   console.log('current position: '+this.current.blue);
                   document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
                   document.getElementById(unit+"."+index).innerHTML = "<div class='blueDot'></div>";
-                  this.current.blue = unit+"."+index;
+                  //this.current.blue = unit+"."+index;
                 }
                 if(this.myKey == 'red'){
                   console.log('current position: '+this.current.red);
                   document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
                   document.getElementById(unit+"."+index).innerHTML = "<div class='redDot'></div>";
-                  this.current.red = unit+"."+index;
+                  //this.current.red = unit+"."+index;
                 }
                 if(this.myKey == 'green'){
                   console.log('current position: '+this.current.green);
                   document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
                   document.getElementById(unit+"."+index).innerHTML = "<div class='greenDot'></div>";
-                  this.current.green = unit+"."+index;
+                  //this.current.green = unit+"."+index;
                 }
 
                 this.positions.push({"key":this.myKey, "move":unit+"."+index});
               } else {
-                console.log('invalid move.');
+                alert('invalid move.');
                 //this.positions.push({"key":this.myKey, "x":0, "y":0});
               }
 
@@ -237,17 +237,94 @@
             },
             validatemove(id) {
               // @todo during turn reset turn session to false
+              var tmp = 0;
               // reset all positions
-              if (sessionStorage.getItem('turn') == 'true'){
-                console.log('already set move.');
-                this.isvalid = false;
+              if (sessionStorage.getItem('turn') == 'true')
+              {
+                alert('already set move.');
               }
-              else{
+              else
+              {
                 sessionStorage.setItem('turn',true);
-                this.isvalid = true;
-              }
 
-            }
+                if(this.myKey == 'blue'){
+                  tmp = parseFloat(this.current.blue);
+                  switch(id) {
+                    case ( tmp - 1.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case (tmp - 1.0).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 1.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 1.0).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 0.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp - 0.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    default:
+                      this.isvalid = false;
+                  }
+                }
+                if(this.myKey == 'red'){
+                  tmp = parseFloat(this.current.red);
+                  switch(id) {
+                    case ( tmp - 1.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case (tmp - 1.0).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 1.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 1.0).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 0.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp - 0.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    default:
+                      this.isvalid = false;
+                  }
+                }
+                if(this.myKey == 'green'){
+                  tmp = parseFloat(this.current.green);
+                  switch(id) {
+                    case ( tmp - 1.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case (tmp - 1.0).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 1.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 1.0).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp + 0.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    case ( tmp - 0.1).toFixed(1):
+                      this.isvalid = true;
+                      break;
+                    default:
+                      this.isvalid = false;
+                  }
+                }
+              } // else
+
+            }// validate move function
         }
     }
 </script>
