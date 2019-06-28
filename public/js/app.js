@@ -2130,6 +2130,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+  // set initial vars
   data: function data() {
     return {
       socket: {},
@@ -2139,17 +2140,26 @@ __webpack_require__.r(__webpack_exports__);
         units: 0,
         turns: 0
       },
+      myKey: '',
       componentKey: 0,
       isHidden: false,
       isDisabled: true,
-      myKey: '',
+      turn: '',
       color: {
         red: false,
         green: false,
         blue: false
-      }
+      },
+      positions: [],
+      current: {
+        blue: 0,
+        red: 0,
+        green: 0
+      },
+      isvalid: false
     };
   },
+  //create socket connection
   created: function created() {
     this.socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default()("http://localhost:3000");
   },
@@ -2159,28 +2169,25 @@ __webpack_require__.r(__webpack_exports__);
   mounted: function mounted() {
     var _this = this;
 
-    console.log('Component mounted.');
     this.socket.on("clients", function (data) {
-      console.log('Connections:', data);
-
-      if (data >= 3) {
-        _this.isDisabled = false;
-      }
-    });
-    this.socket.on("clients", function (data) {
-      console.log('Connections:', data);
-
       if (data >= 3) {
         _this.isDisabled = false;
       }
     });
     this.socket.on("isHidden", function (data) {
-      console.log('hidden:', data);
       _this.form.units = Number(data);
-      _this.isHidden = true;
+      _this.isHidden = true; //setting initial positions
+
+      _this.current.blue = 1.1;
+      _this.current.red = _this.form.units + '.' + 1;
+      _this.current.green = _this.form.units + '.' + _this.form.units;
       _this.myKey = sessionStorage.getItem('myKey');
     });
+    this.socket.on("positions", function (data) {
+      _this.positions = data;
+    });
     this.socket.on("incomplete", function (data) {
+      // alert when a player quits
       alert(data);
       _this.isHidden = false;
       _this.isDisabled = true;
@@ -2198,16 +2205,50 @@ __webpack_require__.r(__webpack_exports__);
       this.componentKey += 1;
     },
     startGame: function startGame() {
+      // initiate start match with default var values
       this.form.units = this.form.unitinput;
-      this.isHidden = true;
       this.socket.emit("hidden", this.form.units);
     },
     divclick: function divclick(unit, index) {
-      console.log('div clicked: ' + unit + ' , ' + index);
-      this.$emit('div clicked', 'someValue');
+      console.log(this.myKey + ' clicked circle: ' + unit + ' , ' + index);
+      this.validatemove(unit + "." + index);
+
+      if (this.isvalid != false) {
+        if (this.myKey == 'blue') {
+          console.log('current position: ' + this.current.blue);
+          document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
+          document.getElementById(unit + "." + index).innerHTML = "<div class='blueDot'></div>";
+          this.current.blue = unit + "." + index;
+        }
+
+        if (this.myKey == 'red') {
+          console.log('current position: ' + this.current.red);
+          document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
+          document.getElementById(unit + "." + index).innerHTML = "<div class='redDot'></div>";
+          this.current.red = unit + "." + index;
+        }
+
+        if (this.myKey == 'green') {
+          console.log('current position: ' + this.current.green);
+          document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
+          document.getElementById(unit + "." + index).innerHTML = "<div class='greenDot'></div>";
+          this.current.green = unit + "." + index;
+        }
+
+        this.positions.push({
+          "key": this.myKey,
+          "move": unit + "." + index
+        });
+      } else {
+        console.log('invalid move.'); //this.positions.push({"key":this.myKey, "x":0, "y":0});
+      }
+
+      console.log(JSON.stringify(this.positions)); // @todo emit position: check if everyone has completed a move for the current the turn
+
+      this.socket.emit("position", this.positions);
     },
     checkkey: function checkkey() {
-      console.log('myKey: ' + sessionStorage.getItem('myKey')); //console.log('myKey: ' + this.myKey);
+      console.log('myKey: ' + sessionStorage.getItem('myKey'));
     },
     read: function read() {
       var _this2 = this;
@@ -2269,6 +2310,17 @@ __webpack_require__.r(__webpack_exports__);
       })["catch"](function (error) {
         console.log(error.message);
       });
+    },
+    validatemove: function validatemove(id) {
+      // @todo during turn reset turn session to false
+      // reset all positions
+      if (sessionStorage.getItem('turn') == 'true') {
+        console.log('already set move.');
+        this.isvalid = false;
+      } else {
+        sessionStorage.setItem('turn', true);
+        this.isvalid = true;
+      }
     }
   }
 });
@@ -46969,44 +47021,70 @@ var render = function() {
                         return _c(
                           "div",
                           {
-                            attrs: { id: units },
+                            staticClass: "Dot",
+                            attrs: { id: unit },
                             on: {
                               click: function($event) {
-                                return _vm.divclick(units, index2)
+                                return _vm.divclick(units, unit)
                               }
                             }
                           },
                           [
                             units == 1
-                              ? _c("div", { staticClass: "dotBorder" }, [
-                                  _c("div", { staticClass: "blueDot" })
-                                ])
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass: "dotBorder",
+                                    attrs: { id: units + "." + unit }
+                                  },
+                                  [_c("div", { staticClass: "blueDot" })]
+                                )
                               : _vm._e(),
                             _vm._v(" "),
                             units == _vm.form.units && index2 == 0
-                              ? _c("div", { staticClass: "dotBorder" }, [
-                                  _c("div", { staticClass: "redDot" })
-                                ])
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass: "dotBorder",
+                                    attrs: { id: units + "." + unit }
+                                  },
+                                  [_c("div", { staticClass: "redDot" })]
+                                )
                               : _vm._e(),
                             _vm._v(" "),
                             units == _vm.form.units && unit == units
-                              ? _c("div", { staticClass: "dotBorder" }, [
-                                  _c("div", { staticClass: "greenDot" })
-                                ])
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass: "dotBorder",
+                                    attrs: { id: units + "." + unit }
+                                  },
+                                  [_c("div", { staticClass: "greenDot" })]
+                                )
                               : _vm._e(),
                             _vm._v(" "),
                             units != _vm.form.units && units != 1
-                              ? _c("div", { staticClass: "dotBorder" }, [
-                                  _c("div", { staticClass: "whiteDot" })
-                                ])
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass: "dotBorder",
+                                    attrs: { id: units + "." + unit }
+                                  },
+                                  [_c("div", { staticClass: "whiteDot" })]
+                                )
                               : _vm._e(),
                             _vm._v(" "),
                             units != 1 &&
                             (units == _vm.form.units && index2 != 0) &&
                             (units == _vm.form.units && unit != units)
-                              ? _c("div", { staticClass: "dotBorder" }, [
-                                  _c("div", { staticClass: "whiteDot" })
-                                ])
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass: "dotBorder",
+                                    attrs: { id: units + "." + unit }
+                                  },
+                                  [_c("div", { staticClass: "whiteDot" })]
+                                )
                               : _vm._e()
                           ]
                         )

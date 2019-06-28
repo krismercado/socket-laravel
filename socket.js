@@ -19,7 +19,9 @@ Socketio.on("connection", socket => {
     console.log(socket.id);
     Socketio.emit("clients", connections.length);
 
-    socket.emit("position", position);
+    socket.on("position", data => {
+      Socketio.emit("positions", data);
+    });
 
     socket.on("hidden", data => {
       Socketio.emit("isHidden", data);

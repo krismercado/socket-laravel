@@ -42,12 +42,12 @@
           <section id="game">
             <div class="gameboard">
               <div v-for="(units, index) in form.units" class="board2" v-bind:id="units">
-                  <div v-for="(unit, index2) in units" v-bind:id="units" v-on:click="divclick(units,index2)">
-                    <div class='dotBorder' v-if="units == 1"><div class='blueDot'></div></div>
-                    <div class='dotBorder' v-if="units == form.units && index2 == 0"><div class='redDot'></div></div>
-                    <div class='dotBorder' v-if="units == form.units && unit == units"><div class='greenDot'></div></div>
-                    <div class='dotBorder' v-if="units != form.units && units != 1"><div class='whiteDot'></div></div>
-                    <div class='dotBorder' v-if="units != 1 && (units == form.units && index2 != 0) && (units == form.units && unit != units)"><div class='whiteDot'></div></div>
+                  <div v-for="(unit, index2) in units" v-bind:id="unit" class="Dot" v-on:click="divclick(units,unit)">
+                    <div class='dotBorder' v-if="units == 1" v-bind:id="units+'.'+unit"><div class='blueDot'></div></div>
+                    <div class='dotBorder' v-if="units == form.units && index2 == 0" v-bind:id="units+'.'+unit"><div class='redDot'></div></div>
+                    <div class='dotBorder' v-if="units == form.units && unit == units" v-bind:id="units+'.'+unit"><div class='greenDot'></div></div>
+                    <div class='dotBorder' v-if="units != form.units && units != 1" v-bind:id="units+'.'+unit"><div class='whiteDot'></div></div>
+                    <div class='dotBorder' v-if="units != 1 && (units == form.units && index2 != 0) && (units == form.units && unit != units)" v-bind:id="units+'.'+unit"><div class='whiteDot'></div></div>
                     <!--<div id="1"><div class='closes' ></div></div>-->
                   </div>
                   <br />
@@ -69,6 +69,7 @@
 <script>
     import io from "socket.io-client";
     export default {
+      // set initial vars
         data() {
             return {
                 socket: {},
@@ -78,17 +79,27 @@
                   units: 0,
                   turns: 0
                 },
+                myKey: '',
                 componentKey: 0,
                 isHidden: false,
                 isDisabled: true,
-                myKey: '',
+                turn: '',
                 color: {
                   red: false,
                   green: false,
                   blue: false
-                }
+                },
+                positions: [],
+                current: {
+                  blue: 0,
+                  red: 0,
+                  green: 0
+                },
+                isvalid: false
             }
         },
+
+        //create socket connection
         created() {
           this.socket = io("http://localhost:3000");
         },
@@ -96,30 +107,30 @@
           this.read();
         },
         mounted() {
-          console.log('Component mounted.');
-
           this.socket.on("clients", data => {
-            console.log('Connections:', data)
-            if (data >= 3){
-              this.isDisabled = false;
-            }
-          });
-
-          this.socket.on("clients", data => {
-            console.log('Connections:', data)
             if (data >= 3){
               this.isDisabled = false;
             }
           });
 
           this.socket.on("isHidden", data => {
-            console.log('hidden:', data)
             this.form.units = Number(data);
             this.isHidden = true;
+
+            //setting initial positions
+            this.current.blue = 1.1;
+            this.current.red = this.form.units + '.' + 1;
+            this.current.green = this.form.units + '.' + this.form.units;
+
             this.myKey = sessionStorage.getItem('myKey');
           });
 
+          this.socket.on("positions", data => {
+            this.positions = data;
+          });
+
           this.socket.on("incomplete", data => {
+            // alert when a player quits
             alert(data);
             this.isHidden = false;
             this.isDisabled = true;
@@ -134,17 +145,50 @@
               this.componentKey += 1;
             },
             startGame() {
+              // initiate start match with default var values
               this.form.units = this.form.unitinput;
-              this.isHidden = true;
+
               this.socket.emit("hidden", this.form.units);
             },
             divclick(unit,index){
-              console.log('div clicked: '+unit+' , '+index);
-              this.$emit('div clicked', 'someValue');
+              console.log(this.myKey+' clicked circle: '+unit+' , '+index);
+
+              this.validatemove(unit+"."+index);
+
+              if (this.isvalid != false)
+              {
+                if(this.myKey == 'blue'){
+                  console.log('current position: '+this.current.blue);
+                  document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
+                  document.getElementById(unit+"."+index).innerHTML = "<div class='blueDot'></div>";
+                  this.current.blue = unit+"."+index;
+                }
+                if(this.myKey == 'red'){
+                  console.log('current position: '+this.current.red);
+                  document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
+                  document.getElementById(unit+"."+index).innerHTML = "<div class='redDot'></div>";
+                  this.current.red = unit+"."+index;
+                }
+                if(this.myKey == 'green'){
+                  console.log('current position: '+this.current.green);
+                  document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
+                  document.getElementById(unit+"."+index).innerHTML = "<div class='greenDot'></div>";
+                  this.current.green = unit+"."+index;
+                }
+
+                this.positions.push({"key":this.myKey, "move":unit+"."+index});
+              } else {
+                console.log('invalid move.');
+                //this.positions.push({"key":this.myKey, "x":0, "y":0});
+              }
+
+              console.log(JSON.stringify(this.positions));
+
+              // @todo emit position: check if everyone has completed a move for the current the turn
+              this.socket.emit("position", this.positions);
             },
             checkkey(){
               console.log('myKey: ' + sessionStorage.getItem('myKey'));
-              //console.log('myKey: ' + this.myKey);
             },
             read() {
               window.axios.get('/api/colors').then(({ data }) => {
@@ -191,6 +235,19 @@
                 console.log(error.message);
               })
             },
+            validatemove(id) {
+              // @todo during turn reset turn session to false
+              // reset all positions
+              if (sessionStorage.getItem('turn') == 'true'){
+                console.log('already set move.');
+                this.isvalid = false;
+              }
+              else{
+                sessionStorage.setItem('turn',true);
+                this.isvalid = true;
+              }
+
+            }
         }
     }
 </script>
