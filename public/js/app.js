@@ -2136,7 +2136,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   // set initial vars
@@ -2147,7 +2146,7 @@ __webpack_require__.r(__webpack_exports__);
       form: {
         unitinput: 4,
         units: 0,
-        turns: 0
+        turns: 1
       },
       myKey: '',
       componentKey: 0,
@@ -2194,16 +2193,35 @@ __webpack_require__.r(__webpack_exports__);
       _this.current.green = _this.form.units + '.' + _this.form.units;
       _this.myKey = sessionStorage.getItem('myKey');
     });
+    this.socket.on("turns", function (data) {
+      _this.form.turns = Number(data);
+    });
     this.socket.on("positions", function (data) {
-      _this.positions = data;
+      // @todo increase turn count here
+      // if reached max turn, calculate total score
+      // sort this list by points, if points is equal, sort by name.
+      _this.positions = helper.arr.multisort(data, ['move'], ['ASC']);
       var blue = _this.current.blue;
       var red = _this.current.red;
       var green = _this.current.green;
 
-      if (_this.positions.length == 3) {
-        _this.positions.forEach(function (position) {
-          console.log('position key: ' + position.key); // check position if there are two colors on the same cell
+      if (_this.positions.length == 3 && _this.form.turns != 0) {
+        // resolves the moves first before hammer if the same cell
+        var dups = [];
 
+        var arr = _this.positions.filter(function (el) {
+          if (dups.indexOf(el.move) == -1) {
+            dups.push(el.move);
+            return true;
+          }
+
+          return false;
+        });
+
+        _this.positions = arr;
+        console.log(_this.positions);
+
+        _this.positions.forEach(function (position) {
           if (position.key == 'blue') {
             if (position.move != 0) {
               if (position.type == "move") {
@@ -2251,7 +2269,7 @@ __webpack_require__.r(__webpack_exports__);
               }
             }
           }
-        }); // @todo emit to resolve all moves and empty positions object
+        }); // emit to resolve all moves and empty positions object
 
 
         _this.current.red = red;
@@ -2259,7 +2277,14 @@ __webpack_require__.r(__webpack_exports__);
         _this.current.green = green;
         _this.positions = [];
         sessionStorage.setItem('turn', false);
-        _this.activeBtn = '';
+        _this.activeBtn = ''; // end of game
+
+        _this.form.turns = _this.form.turns - 1;
+        console.log(_this.form.turns);
+
+        if (_this.form.turns == 0) {
+          alert('GAME OVER!');
+        }
       }
     });
     this.socket.on("incomplete", function (data) {
@@ -2267,14 +2292,68 @@ __webpack_require__.r(__webpack_exports__);
       alert(data);
       _this.isHidden = false;
       _this.isDisabled = true;
-      _this.form.units = 0;
+      _this.form.units = 4;
+      _this.form.turns = 1;
 
       _this.update(1, false);
 
       _this.update(2, false);
 
       _this.update(3, false);
-    });
+    }); // --- helper to sort
+
+    if (typeof helper == 'undefined') {
+      var helper = {};
+    }
+
+    helper.arr = {
+      /**
+      * Function to sort multidimensional array
+      *
+      * <a href="/param">@param</a> {array} [arr] Source array
+      * <a href="/param">@param</a> {array} [columns] List of columns to sort
+      * <a href="/param">@param</a> {array} [order_by] List of directions (ASC, DESC)
+      * @returns {array}
+      */
+      multisort: function multisort(arr, columns, order_by) {
+        if (typeof columns == 'undefined') {
+          columns = [];
+
+          for (x = 0; x < arr[0].length; x++) {
+            columns.push(x);
+          }
+        }
+
+        if (typeof order_by == 'undefined') {
+          order_by = [];
+
+          for (x = 0; x < arr[0].length; x++) {
+            order_by.push('ASC');
+          }
+        }
+
+        function multisort_recursive(a, b, columns, order_by, index) {
+          var direction = order_by[index] == 'DESC' ? 1 : 0;
+          var is_numeric = !isNaN(+a[columns[index]] - +b[columns[index]]);
+          var x = is_numeric ? +a[columns[index]] : a[columns[index]].toLowerCase();
+          var y = is_numeric ? +b[columns[index]] : b[columns[index]].toLowerCase();
+
+          if (x < y) {
+            return direction == 0 ? -1 : 1;
+          }
+
+          if (x == y) {
+            return columns.length - 1 > index ? multisort_recursive(a, b, columns, order_by, index + 1) : 0;
+          }
+
+          return direction == 0 ? 1 : -1;
+        }
+
+        return arr.sort(function (a, b) {
+          return multisort_recursive(a, b, columns, order_by, 0);
+        });
+      }
+    };
   },
   methods: {
     forceRerender: function forceRerender() {
@@ -2284,6 +2363,7 @@ __webpack_require__.r(__webpack_exports__);
       // initiate start match with default var values
       this.form.units = this.form.unitinput;
       this.socket.emit("hidden", this.form.units);
+      this.socket.emit("turn", this.form.turns);
     },
     divclick: function divclick(unit, index) {
       if (this.activeBtn == '' && unit != 0 && index != 0) {
@@ -2413,6 +2493,7 @@ __webpack_require__.r(__webpack_exports__);
           case '0.0':
             console.log('skipped');
             id = 0;
+            this.move_type = 'move';
             this.isvalid = true;
             break;
 
@@ -2422,8 +2503,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
         if (this.activeBtn == 'btn1') {
+          // hammer move
           this.move_type = 'hammer';
         } else {
+          // cell movement
           this.move_type = 'move';
         }
 
@@ -47103,7 +47186,12 @@ var render = function() {
                         }
                       ],
                       staticClass: "form-control",
-                      attrs: { type: "text", id: "turns", name: "turns" },
+                      attrs: {
+                        type: "number",
+                        id: "turns",
+                        name: "turns",
+                        min: "1"
+                      },
                       domProps: { value: _vm.form.turns },
                       on: {
                         input: function($event) {

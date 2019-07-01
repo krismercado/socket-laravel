@@ -63,9 +63,6 @@
         font-weight: bold;
       }
 
-
-
-
       td {
         border: 1px solid black;
         height: 50px;

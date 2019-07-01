@@ -24,7 +24,7 @@
               </div>
               <div class="col-6">
                 <label for="inputCity">How many turns?</label>
-                <input type="text" class="form-control" id="turns" name="turns" v-model="form.turns">
+                <input type="number" class="form-control" id="turns" name="turns" min="1" v-model="form.turns">
               </div>
               <br />
             </div>
@@ -48,7 +48,6 @@
                     <div class='dotBorder' v-if="units == form.units && unit == units" v-bind:id="units+'.'+unit"><div class='greenDot'></div></div>
                     <div class='dotBorder' v-if="units != form.units && units != 1" v-bind:id="units+'.'+unit"><div class='whiteDot'></div></div>
                     <div class='dotBorder' v-if="units != 1 && (units == form.units && index2 != 0) && (units == form.units && unit != units)" v-bind:id="units+'.'+unit"><div class='whiteDot'></div></div>
-                    <!--<div id="1"><div class='closes' ></div></div>-->
                   </div>
                   <br />
               </div>
@@ -86,7 +85,7 @@
                 form: {
                   unitinput: 4,
                   units: 0,
-                  turns: 0
+                  turns: 1
                 },
                 myKey: '',
                 componentKey: 0,
@@ -136,18 +135,36 @@
             this.myKey = sessionStorage.getItem('myKey');
           });
 
-          this.socket.on("positions", data => {
+          this.socket.on("turns", data => {
+            this.form.turns = Number(data);
+          });
 
-            this.positions = data;
+          this.socket.on("positions", data => {
+            // @todo increase turn count here
+            // if reached max turn, calculate total score
+            // sort this list by points, if points is equal, sort by name.
+            this.positions = helper.arr.multisort(data, ['move'], ['ASC']);
+
             var blue = this.current.blue;
             var red = this.current.red;
             var green = this.current.green;
 
-            if (this.positions.length == 3) {
-              this.positions.forEach(function(position){
+            if ((this.positions.length == 3) && (this.form.turns != 0)) {
+              // resolves the moves first before hammer if the same cell
+              var dups = [];
+              var arr = this.positions.filter(function(el) {
+                if (dups.indexOf(el.move) == -1) {
+                  dups.push(el.move);
+                  return true;
+                }
+                return false;
+              });
 
-                console.log('position key: ' + position.key);
-                // check position if there are two colors on the same cell
+              this.positions = arr;
+
+              console.log(this.positions);
+
+              this.positions.forEach(function(position){
                 if(position.key == 'blue'){
                   if(position.move != 0) {
                     if(position.type == "move"){
@@ -162,8 +179,6 @@
                       document.getElementById(position.move).classList.remove('dotBorder');
                       document.getElementById(position.move).classList.add('closed');
                     }
-
-
                   }
                 }
                 if(position.key == 'red'){
@@ -180,8 +195,6 @@
                       document.getElementById(position.move).classList.remove('dotBorder');
                       document.getElementById(position.move).classList.add('closed');
                     }
-
-
                   }
                 }
                 if(position.key == 'green'){
@@ -198,13 +211,11 @@
                       document.getElementById(position.move).classList.remove('dotBorder');
                       document.getElementById(position.move).classList.add('closed');
                     }
-
-
                   }
                 }
 
               });
-              // @todo emit to resolve all moves and empty positions object
+              // emit to resolve all moves and empty positions object
               this.current.red = red;
               this.current.blue = blue;
               this.current.green = green;
@@ -213,6 +224,14 @@
 
               sessionStorage.setItem('turn',false);
               this.activeBtn = '';
+
+              // end of game
+              this.form.turns = this.form.turns - 1;
+              console.log(this.form.turns);
+
+              if (this.form.turns == 0) {
+                alert('GAME OVER!');
+              }
             }
           });
 
@@ -221,11 +240,71 @@
             alert(data);
             this.isHidden = false;
             this.isDisabled = true;
-            this.form.units = 0;
+            this.form.units = 4;
+            this.form.turns = 1;
             this.update(1, false);
             this.update(2, false);
             this.update(3, false);
           });
+
+
+          // --- helper to sort
+
+          if( typeof helper == 'undefined' ) {
+            var helper = { } ;
+          }
+
+          helper.arr = {
+                   /**
+               * Function to sort multidimensional array
+               *
+               * <a href="/param">@param</a> {array} [arr] Source array
+               * <a href="/param">@param</a> {array} [columns] List of columns to sort
+               * <a href="/param">@param</a> {array} [order_by] List of directions (ASC, DESC)
+               * @returns {array}
+               */
+              multisort: function(arr, columns, order_by) {
+                  if(typeof columns == 'undefined') {
+                      columns = []
+                      for(x=0;x<arr[0].length;x++) {
+                          columns.push(x);
+                      }
+                  }
+
+                  if(typeof order_by == 'undefined') {
+                      order_by = []
+                      for(x=0;x<arr[0].length;x++) {
+                          order_by.push('ASC');
+                      }
+                  }
+
+                  function multisort_recursive(a,b,columns,order_by,index) {
+                      var direction = order_by[index] == 'DESC' ? 1 : 0;
+
+                      var is_numeric = !isNaN(+a[columns[index]] - +b[columns[index]]);
+
+
+                      var x = is_numeric ? +a[columns[index]] : a[columns[index]].toLowerCase();
+                      var y = is_numeric ? +b[columns[index]] : b[columns[index]].toLowerCase();
+
+
+
+                      if(x < y) {
+                              return direction == 0 ? -1 : 1;
+                      }
+
+                      if(x == y)  {
+                          return columns.length-1 > index ? multisort_recursive(a,b,columns,order_by,index+1) : 0;
+                      }
+
+                      return direction == 0 ? 1 : -1;
+                  }
+
+                  return arr.sort(function (a,b) {
+                      return multisort_recursive(a,b,columns,order_by,0);
+                  });
+              }
+          };
         },
         methods: {
             forceRerender() {
@@ -236,6 +315,7 @@
               this.form.units = this.form.unitinput;
 
               this.socket.emit("hidden", this.form.units);
+              this.socket.emit("turn", this.form.turns);
             },
             divclick(unit,index){
 
@@ -354,6 +434,7 @@
                   case '0.0':
                   console.log('skipped');
                     id = 0;
+                    this.move_type = 'move';
                     this.isvalid = true;
                     break;
                   default:
@@ -362,8 +443,10 @@
 
                 // figure out what type of move before pushing
                 if (this.activeBtn == 'btn1') {
+                  // hammer move
                   this.move_type = 'hammer';
                 } else {
+                  // cell movement
                   this.move_type = 'move';
                 }
 
@@ -396,5 +479,6 @@
         }
     }
 </script>
+
 
 <style scoped></style>

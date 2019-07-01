@@ -24,6 +24,10 @@ Socketio.on("connection", socket => {
       Socketio.emit("positions", data);
     });
 
+    socket.on("turn", data => {
+      Socketio.emit("turns", data);
+    });
+
     socket.on("hidden", data => {
       Socketio.emit("isHidden", data);
     });
