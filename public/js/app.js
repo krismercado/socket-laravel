@@ -2208,27 +2208,33 @@ __webpack_require__.r(__webpack_exports__);
             if (position.move != 0) {
               document.getElementById(blue).innerHTML = "<div class='whiteDot'></div>";
               document.getElementById(position.move).innerHTML = "<div class='blueDot'></div>";
-            } //this.current.blue = unit+"."+index;
-
+              blue = position.move;
+            }
           }
 
           if (position.key == 'red') {
             if (position.move != 0) {
               document.getElementById(red).innerHTML = "<div class='whiteDot'></div>";
               document.getElementById(position.move).innerHTML = "<div class='redDot'></div>";
-            } //this.current.red = unit+"."+index;
-
+              red = position.move;
+            }
           }
 
           if (position.key == 'green') {
             if (position.move != 0) {
               document.getElementById(green).innerHTML = "<div class='whiteDot'></div>";
               document.getElementById(position.move).innerHTML = "<div class='greenDot'></div>";
-            } //this.current.green = unit+"."+index;
-
+              green = position.move;
+            }
           }
         }); // @todo emit to resolve all moves and empty positions object
 
+
+        _this.current.red = red;
+        _this.current.blue = blue;
+        _this.current.green = green;
+        _this.positions = [];
+        sessionStorage.setItem('turn', false);
       }
     });
     this.socket.on("incomplete", function (data) {
@@ -2260,20 +2266,6 @@ __webpack_require__.r(__webpack_exports__);
       } else {
         console.log(this.myKey + ' clicked circle: ' + unit + ' , ' + index);
         this.validatemove(unit + "." + index);
-
-        if (this.isvalid != false) {
-          this.positions.push({
-            "key": this.myKey,
-            "move": unit + "." + index
-          });
-        } else {
-          alert("Invalid move, you've lost a turn");
-          this.positions.push({
-            "key": this.myKey,
-            "move": 0
-          });
-        }
-
         console.log(JSON.stringify(this.positions)); // @todo emit position: check if everyone has completed a move for the current the turn
 
         this.socket.emit("position", this.positions);
@@ -2340,6 +2332,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     validatemove: function validatemove(id) {
       // @todo during turn reset turn session to false
+      this.isvalid = false;
       var tmp = 0; // reset all positions
 
       if (sessionStorage.getItem('turn') == 'true') {
@@ -2361,31 +2354,56 @@ __webpack_require__.r(__webpack_exports__);
 
         switch (id) {
           case (tmp - 1.1).toFixed(1):
+            console.log(tmp + '-1.1 ' + (tmp - 1.1));
             this.isvalid = true;
             break;
 
           case (tmp - 1.0).toFixed(1):
+            console.log(tmp + '-1.0' + (tmp - 1.0));
             this.isvalid = true;
             break;
 
           case (tmp + 1.1).toFixed(1):
+            console.log(tmp + '+1.1' + (tmp + 1.1));
             this.isvalid = true;
             break;
 
           case (tmp + 1.0).toFixed(1):
+            console.log(tmp + '+1.0' + (tmp + 1.0));
             this.isvalid = true;
             break;
 
           case (tmp + 0.1).toFixed(1):
+            console.log(tmp + '+0.1' + (tmp + 0.1));
             this.isvalid = true;
             break;
 
           case (tmp - 0.1).toFixed(1):
+            console.log(tmp + '-0.1' + (tmp - 0.1));
+            this.isvalid = true;
+            break;
+
+          case tmp:
+            console.log('myself: ' + tmp);
             this.isvalid = true;
             break;
 
           default:
             this.isvalid = false;
+        } // resolve moves
+
+
+        if (this.isvalid != false) {
+          this.positions.push({
+            "key": this.myKey,
+            "move": id
+          });
+        } else {
+          alert("Invalid move, you've lost a turn");
+          this.positions.push({
+            "key": this.myKey,
+            "move": 0
+          });
         }
       } // else
 

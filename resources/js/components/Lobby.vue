@@ -147,34 +147,38 @@
               this.positions.forEach(function(position){
 
                 console.log('position key: ' + position.key);
-                if(position.key == 'blue'){
 
+                if(position.key == 'blue'){
                   if(position.move != 0) {
                     document.getElementById(blue).innerHTML = "<div class='whiteDot'></div>";
                     document.getElementById(position.move).innerHTML = "<div class='blueDot'></div>";
+                    blue = position.move;
                   }
-
-                  //this.current.blue = unit+"."+index;
                 }
                 if(position.key == 'red'){
                   if(position.move != 0) {
                     document.getElementById(red).innerHTML = "<div class='whiteDot'></div>";
                     document.getElementById(position.move).innerHTML = "<div class='redDot'></div>";
+                    red = position.move;
                   }
-
-                  //this.current.red = unit+"."+index;
                 }
                 if(position.key == 'green'){
                   if(position.move != 0) {
                     document.getElementById(green).innerHTML = "<div class='whiteDot'></div>";
                     document.getElementById(position.move).innerHTML = "<div class='greenDot'></div>";
+                    green = position.move;
                   }
-
-                  //this.current.green = unit+"."+index;
                 }
 
               });
               // @todo emit to resolve all moves and empty positions object
+              this.current.red = red;
+              this.current.blue = blue;
+              this.current.green = green;
+
+              this.positions = [];
+
+              sessionStorage.setItem('turn',false);
             }
           });
 
@@ -207,14 +211,6 @@
                 console.log(this.myKey+' clicked circle: '+ unit +' , '+ index);
 
                 this.validatemove(unit+"."+index);
-
-                if (this.isvalid != false)
-                {
-                  this.positions.push({"key":this.myKey, "move":unit+"."+index});
-                } else {
-                  alert("Invalid move, you've lost a turn");
-                  this.positions.push({"key":this.myKey, "move":0});
-                }
 
                 console.log(JSON.stringify(this.positions));
 
@@ -269,6 +265,8 @@
             },
             validatemove(id) {
               // @todo during turn reset turn session to false
+              this.isvalid = false;
+
               var tmp = 0;
               // reset all positions
               if (sessionStorage.getItem('turn') == 'true')
@@ -290,27 +288,47 @@
                 }
 
                 switch(id) {
-                  case ( tmp - 1.1).toFixed(1):
+                  case ( tmp - 1.1 ).toFixed(1):
+                  console.log(tmp + '-1.1 ' + (tmp - 1.1));
                     this.isvalid = true;
                     break;
-                  case (tmp - 1.0).toFixed(1):
+                  case (tmp - 1.0 ).toFixed(1):
+                  console.log(tmp + '-1.0' + (tmp - 1.0));
                     this.isvalid = true;
                     break;
-                  case ( tmp + 1.1).toFixed(1):
+                  case ( tmp + 1.1 ).toFixed(1):
+                  console.log(tmp + '+1.1' + (tmp + 1.1));
                     this.isvalid = true;
                     break;
-                  case ( tmp + 1.0).toFixed(1):
+                  case ( tmp + 1.0 ).toFixed(1):
+                  console.log(tmp + '+1.0' + (tmp + 1.0));
                     this.isvalid = true;
                     break;
-                  case ( tmp + 0.1).toFixed(1):
+                  case ( tmp + 0.1 ).toFixed(1):
+                  console.log(tmp + '+0.1' + (tmp + 0.1));
                     this.isvalid = true;
                     break;
-                  case ( tmp - 0.1).toFixed(1):
+                  case ( tmp - 0.1 ).toFixed(1):
+                  console.log(tmp + '-0.1' + (tmp - 0.1));
+                    this.isvalid = true;
+                    break;
+                  case tmp:
+                  console.log('myself: ' + tmp);
                     this.isvalid = true;
                     break;
                   default:
                     this.isvalid = false;
                 }
+
+                // resolve moves
+                if (this.isvalid != false)
+                {
+                  this.positions.push({"key":this.myKey, "move":id});
+                } else {
+                  alert("Invalid move, you've lost a turn");
+                  this.positions.push({"key":this.myKey, "move":0});
+                }
+
               } // else
 
             }// validate move function
