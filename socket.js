@@ -20,6 +20,7 @@ Socketio.on("connection", socket => {
     Socketio.emit("clients", connections.length);
 
     socket.on("position", data => {
+      console.log(data);
       Socketio.emit("positions", data);
     });
 

@@ -2195,37 +2195,34 @@ __webpack_require__.r(__webpack_exports__);
     });
     this.socket.on("positions", function (data) {
       _this.positions = data;
+      var blue = _this.current.blue;
+      var red = _this.current.red;
+      var green = _this.current.green;
+      console.log(red + " " + blue + " " + green);
 
       if (_this.positions.length == 3) {
         _this.positions.forEach(function (position) {
-          console.log(position.key);
-          console.log(position.move);
+          console.log('position key: ' + position.key);
 
           if (position.key == 'blue') {
-            console.log('current position: ' + this.current.blue);
-
             if (position.move != 0) {
-              document.getElementById(this.current.blue).innerHTML = "<div class='whiteDot'></div>";
+              document.getElementById(blue).innerHTML = "<div class='whiteDot'></div>";
               document.getElementById(position.move).innerHTML = "<div class='blueDot'></div>";
             } //this.current.blue = unit+"."+index;
 
           }
 
           if (position.key == 'red') {
-            console.log('current position: ' + this.current.red);
-
             if (position.move != 0) {
-              document.getElementById(this.current.red).innerHTML = "<div class='whiteDot'></div>";
+              document.getElementById(red).innerHTML = "<div class='whiteDot'></div>";
               document.getElementById(position.move).innerHTML = "<div class='redDot'></div>";
             } //this.current.red = unit+"."+index;
 
           }
 
           if (position.key == 'green') {
-            console.log('current position: ' + this.current.green);
-
             if (position.move != 0) {
-              document.getElementById(this.current.green).innerHTML = "<div class='whiteDot'></div>";
+              document.getElementById(green).innerHTML = "<div class='whiteDot'></div>";
               document.getElementById(position.move).innerHTML = "<div class='greenDot'></div>";
             } //this.current.green = unit+"."+index;
 
