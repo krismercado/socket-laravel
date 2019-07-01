@@ -230,7 +230,36 @@
               console.log(this.form.turns);
 
               if (this.form.turns == 0) {
-                alert('GAME OVER!');
+                // lets get the current positions
+                var b = 0;
+                var r = 0;
+                var g = 0;
+
+                // calculate scores
+                b = this.checkwins(this.current.blue);
+                r = this.checkwins(this.current.red);
+                g = this.checkwins(this.current.green);
+
+                if (b > r && b > g) {
+                  alert('Blue Wins!');
+                }
+                else if (r > b && r > g) {
+                  alert('Red Wins!');
+                }
+                else if (g > b && g > r) {
+                    alert('Green Wins!');
+                }
+                else if (b == r && b > g) {
+                    alert('Blue and Red Wins!');
+                }
+                else if (g == r && g > b) {
+                    alert('Green and Red Wins!');
+                }
+                else{
+                    alert('Nobody won.');
+                }
+
+                alert('GAME OVER! SCORE BOARD: red - ' + r + ' blue - ' + b + ' green - ' + g);
               }
             }
           });
@@ -332,6 +361,74 @@
                 // @todo emit position: check if everyone has completed a move for the current the turn
                 this.socket.emit("position", this.positions);
               }
+
+            },
+            checkwins(tmp){
+              var score = 0;
+
+              tmp = parseFloat(tmp);
+              var id1 = String(( tmp - 1.1 ).toFixed(1));
+              var id2 = String(( tmp - 1.0 ).toFixed(1));
+              var id3 = String(( tmp + 1.1 ).toFixed(1));
+              var id4 = String(( tmp + 1.0 ).toFixed(1));
+              var id5 = String(( tmp + 0.1 ).toFixed(1));
+              var id6 = String(( tmp - 0.1 ).toFixed(1));
+
+              if(document.getElementById(id1)) {
+                if ((document.getElementById(id1).className != 'closed') && (document.getElementById(id1).className != 'dotBorder player')) {
+                  score++;
+                }
+                else if (document.getElementById(id1).className == 'dotBorder player'){
+                  return 0;
+                }
+              }
+
+              if(document.getElementById(id2)) {
+                if ((document.getElementById(id2).className != 'closed') && (document.getElementById(id2).className != 'dotBorder player')) {
+                  score++;
+                }
+                else if (document.getElementById(id2).className == 'dotBorder player'){
+                  return 0;
+                }
+              }
+
+              if(document.getElementById(id3)) {
+                if ((document.getElementById(id3).className != 'closed') && (document.getElementById(id3).className != 'dotBorder player')) {
+                  score++;
+                }
+                else if (document.getElementById(id3).className == 'dotBorder player'){
+                  return 0;
+                }
+              }
+
+              if(document.getElementById(id4)) {
+                if ((document.getElementById(id4).className != 'closed') && (document.getElementById(id4).className != 'dotBorder player')) {
+                  score++;
+                }
+                else if (document.getElementById(id4).className == 'dotBorder player'){
+                  return 0;
+                }
+              }
+
+              if(document.getElementById(id5)) {
+                if ((document.getElementById(id5).className != 'closed') && (document.getElementById(id5).className != 'dotBorder player')) {
+                  score++;
+                }
+                else if (document.getElementById(id5).className == 'dotBorder player'){
+                  return 0;
+                }
+              }
+
+              if(document.getElementById(id6)) {
+                if ((document.getElementById(id6).className != 'closed') && (document.getElementById(id6).className != 'dotBorder player')) {
+                  score++;
+                }
+                else if (document.getElementById(id6).className == 'dotBorder player'){
+                  return 0;
+                }
+              }
+
+              return score;
 
             },
             checkkey(){

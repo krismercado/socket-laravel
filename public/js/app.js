@@ -2283,7 +2283,30 @@ __webpack_require__.r(__webpack_exports__);
         console.log(_this.form.turns);
 
         if (_this.form.turns == 0) {
-          alert('GAME OVER!');
+          // lets get the current positions
+          var b = 0;
+          var r = 0;
+          var g = 0; // calculate scores
+
+          b = _this.checkwins(_this.current.blue);
+          r = _this.checkwins(_this.current.red);
+          g = _this.checkwins(_this.current.green);
+
+          if (b > r && b > g) {
+            alert('Blue Wins!');
+          } else if (r > b && r > g) {
+            alert('Red Wins!');
+          } else if (g > b && g > r) {
+            alert('Green Wins!');
+          } else if (b == r && b > g) {
+            alert('Blue and Red Wins!');
+          } else if (g == r && g > b) {
+            alert('Green and Red Wins!');
+          } else {
+            alert('Nobody won.');
+          }
+
+          alert('GAME OVER! WINNER SCORE BOARD: red - ' + r + ' blue - ' + b + ' green - ' + g);
         }
       }
     });
@@ -2375,6 +2398,66 @@ __webpack_require__.r(__webpack_exports__);
 
         this.socket.emit("position", this.positions);
       }
+    },
+    checkwins: function checkwins(tmp) {
+      var score = 0;
+      tmp = parseFloat(tmp);
+      var id1 = String((tmp - 1.1).toFixed(1));
+      var id2 = String((tmp - 1.0).toFixed(1));
+      var id3 = String((tmp + 1.1).toFixed(1));
+      var id4 = String((tmp + 1.0).toFixed(1));
+      var id5 = String((tmp + 0.1).toFixed(1));
+      var id6 = String((tmp - 0.1).toFixed(1));
+
+      if (document.getElementById(id1)) {
+        if (document.getElementById(id1).className != 'closed' && document.getElementById(id1).className != 'dotBorder player') {
+          score++;
+        } else if (document.getElementById(id1).className == 'dotBorder player') {
+          return 0;
+        }
+      }
+
+      if (document.getElementById(id2)) {
+        if (document.getElementById(id2).className != 'closed' && document.getElementById(id2).className != 'dotBorder player') {
+          score++;
+        } else if (document.getElementById(id2).className == 'dotBorder player') {
+          return 0;
+        }
+      }
+
+      if (document.getElementById(id3)) {
+        if (document.getElementById(id3).className != 'closed' && document.getElementById(id3).className != 'dotBorder player') {
+          score++;
+        } else if (document.getElementById(id3).className == 'dotBorder player') {
+          return 0;
+        }
+      }
+
+      if (document.getElementById(id4)) {
+        if (document.getElementById(id4).className != 'closed' && document.getElementById(id4).className != 'dotBorder player') {
+          score++;
+        } else if (document.getElementById(id4).className == 'dotBorder player') {
+          return 0;
+        }
+      }
+
+      if (document.getElementById(id5)) {
+        if (document.getElementById(id5).className != 'closed' && document.getElementById(id5).className != 'dotBorder player') {
+          score++;
+        } else if (document.getElementById(id5).className == 'dotBorder player') {
+          return 0;
+        }
+      }
+
+      if (document.getElementById(id6)) {
+        if (document.getElementById(id6).className != 'closed' && document.getElementById(id6).className != 'dotBorder player') {
+          score++;
+        } else if (document.getElementById(id6).className == 'dotBorder player') {
+          return 0;
+        }
+      }
+
+      return score;
     },
     checkkey: function checkkey() {
       console.log('myKey: ' + sessionStorage.getItem('myKey'));
