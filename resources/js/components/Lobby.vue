@@ -66,7 +66,7 @@
                 </p>
                 <button class="btn" type="button" @click="activeBtn = 'btn1'" :class="{active: activeBtn === 'btn1' }">Hammer</button>
                 <button class="btn" type="button" @click="activeBtn = 'btn2'" :class="{active: activeBtn === 'btn2' }">Move Cell</button>
-                <button class="btn" type="button" @click="activeBtn = 'btn3'" :class="{active: activeBtn === 'btn3' }">Skip Turn</button>
+                <button class="btn" type="button" @click="divclick(0,0)">Skip Turn</button>
               </div>
           </div>
         </div>
@@ -105,7 +105,8 @@
                   green: 0
                 },
                 isvalid: false,
-                activeBtn:''
+                activeBtn:'',
+                move_type: ''
             }
         },
 
@@ -142,31 +143,63 @@
             var red = this.current.red;
             var green = this.current.green;
 
-            console.log(red + " " + blue + " " + green);
             if (this.positions.length == 3) {
               this.positions.forEach(function(position){
 
                 console.log('position key: ' + position.key);
-
+                // check position if there are two colors on the same cell
                 if(position.key == 'blue'){
                   if(position.move != 0) {
-                    document.getElementById(blue).innerHTML = "<div class='whiteDot'></div>";
-                    document.getElementById(position.move).innerHTML = "<div class='blueDot'></div>";
-                    blue = position.move;
+                    if(position.type == "move"){
+                      document.getElementById(blue).innerHTML = "<div class='whiteDot'></div>";
+                      document.getElementById(blue).classList.remove('player');
+                      document.getElementById(position.move).innerHTML = "<div class='blueDot'></div>";
+                      document.getElementById(position.move).classList.add('player');
+                      blue = position.move;
+                    }
+                    else if (position.type == "hammer") {
+                      document.getElementById(position.move).innerHTML = "<div class='closes'></div>";
+                      document.getElementById(position.move).classList.remove('dotBorder');
+                      document.getElementById(position.move).classList.add('closed');
+                    }
+
+
                   }
                 }
                 if(position.key == 'red'){
                   if(position.move != 0) {
-                    document.getElementById(red).innerHTML = "<div class='whiteDot'></div>";
-                    document.getElementById(position.move).innerHTML = "<div class='redDot'></div>";
-                    red = position.move;
+                    if(position.type == "move"){
+                      document.getElementById(red).innerHTML = "<div class='whiteDot'></div>";
+                      document.getElementById(red).classList.remove('player');
+                      document.getElementById(position.move).innerHTML = "<div class='redDot'></div>";
+                      document.getElementById(position.move).classList.add('player');
+                      red = position.move;
+                    }
+                    else if (position.type == "hammer") {
+                      document.getElementById(position.move).innerHTML = "<div class='closes'></div>";
+                      document.getElementById(position.move).classList.remove('dotBorder');
+                      document.getElementById(position.move).classList.add('closed');
+                    }
+
+
                   }
                 }
                 if(position.key == 'green'){
                   if(position.move != 0) {
-                    document.getElementById(green).innerHTML = "<div class='whiteDot'></div>";
-                    document.getElementById(position.move).innerHTML = "<div class='greenDot'></div>";
-                    green = position.move;
+                    if(position.type == "move"){
+                      document.getElementById(green).innerHTML = "<div class='whiteDot'></div>";
+                      document.getElementById(green).classList.remove('player');
+                      document.getElementById(position.move).innerHTML = "<div class='greenDot'></div>";
+                      document.getElementById(position.move).classList.add('player');
+                      green = position.move;
+                    }
+                    else if (position.type == "hammer") {
+                      document.getElementById(position.move).innerHTML = "<div class='closes'></div>";
+                      document.getElementById(position.move).classList.remove('dotBorder');
+                      document.getElementById(position.move).classList.add('closed');
+                    }
+
+
                   }
                 }
 
@@ -179,6 +212,7 @@
               this.positions = [];
 
               sessionStorage.setItem('turn',false);
+              this.activeBtn = '';
             }
           });
 
@@ -204,7 +238,8 @@
               this.socket.emit("hidden", this.form.units);
             },
             divclick(unit,index){
-              if(this.activeBtn == '') {
+
+              if(this.activeBtn == '' && (unit != 0 && index != 0)) {
                 alert('please choose a move type');
               }
               else {
@@ -275,8 +310,10 @@
               }
               else
               {
+                // set turn to true to identify that the player has already done a move
                 sessionStorage.setItem('turn',true);
 
+                // lets get the current positions
                 if(this.myKey == 'blue'){
                   tmp = parseFloat(this.current.blue);
                 }
@@ -287,9 +324,11 @@
                   tmp = parseFloat(this.current.green);
                 }
 
+
+                // only allow moves that are adjacent
                 switch(id) {
                   case ( tmp - 1.1 ).toFixed(1):
-                  console.log(tmp + '-1.1 ' + (tmp - 1.1));
+                  console.log(tmp + '-1.1' + (tmp - 1.1));
                     this.isvalid = true;
                     break;
                   case (tmp - 1.0 ).toFixed(1):
@@ -312,18 +351,40 @@
                   console.log(tmp + '-0.1' + (tmp - 0.1));
                     this.isvalid = true;
                     break;
-                  case tmp:
-                  console.log('myself: ' + tmp);
+                  case '0.0':
+                  console.log('skipped');
+                    id = 0;
                     this.isvalid = true;
                     break;
                   default:
                     this.isvalid = false;
                 }
 
+                // figure out what type of move before pushing
+                if (this.activeBtn == 'btn1') {
+                  this.move_type = 'hammer';
+                } else {
+                  this.move_type = 'move';
+                }
+
+
+                if (id != 0) {
+                  // make sure the move is not hammered
+                  if (document.getElementById(id).className == 'closed') {
+                    this.isvalid = false;
+                  }
+
+                  // make sure that you cannot hammer on an oppising player's position
+                  if (document.getElementById(id).className == 'dotBorder player' && this.move_type == 'hammer') {
+                    this.isvalid = false;
+                  }
+                }
+
+
                 // resolve moves
                 if (this.isvalid != false)
                 {
-                  this.positions.push({"key":this.myKey, "move":id});
+                  this.positions.push({"key":this.myKey, "move":id, "type":this.move_type});
                 } else {
                   alert("Invalid move, you've lost a turn");
                   this.positions.push({"key":this.myKey, "move":0});
