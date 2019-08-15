@@ -3,7 +3,7 @@
 or Laravel Valet: https://laravel.com/docs/5.8/valet (for MacOS)
 
 Project:
-* cd /jackhammer
+* cd /socket-laravel
 * composer install
 *  Copy the .env.example to .env and configure the Database credentials for windows: copy .env.example .env for unix: cp .env.example .env
 * Generate the key : php artisan key:generate
@@ -27,4 +27,4 @@ node socket.js
 * Open the app through the browser depending what url php artisan serve will provide. (e.g http://127.0.0.1:8000)
 * Open three tabs to simulate three players
 * When a player is quitting / exiting a browser, make sure node is still running.
-* Restarting the game requires exiting all browsers and restarting node# jackhammer
+* Restarting the game requires exiting all browsers and restarting node
