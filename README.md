@@ -27,4 +27,4 @@ node socket.js
 * Open the app through the browser depending what url php artisan serve will provide. (e.g http://127.0.0.1:8000)
 * Open three tabs to simulate three players
 * When a player is quitting / exiting a browser, make sure node is still running.
-* Restarting the game requires exiting all browsers and restarting node
+* Restarting the game requires exiting all browsers and restarting node# jackhammer
